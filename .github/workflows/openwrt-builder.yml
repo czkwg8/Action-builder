@@ -56,6 +56,16 @@ jobs:
         git clone $REPO_URL -b $REPO_BRANCH immortalwrt
         ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
 
+    - name: Cache build assets
+      uses: actions/cache@v4
+      with:
+        path: |
+          /workdir/immortalwrt/staging_dir
+          /workdir/immortalwrt/dl
+        key: ${{ runner.os }}-${{ env.REPO_BRANCH }}-build-${{ hashFiles('**/feeds.conf.default', '**/.config') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ env.REPO_BRANCH }}-build-
+
     - name: Load custom feeds
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF immortalwrt/feeds.conf.default
