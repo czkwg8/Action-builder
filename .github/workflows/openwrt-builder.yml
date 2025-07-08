@@ -56,11 +56,22 @@ jobs:
         git clone $REPO_URL -b $REPO_BRANCH immortalwrt
         ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
 
+    - name: Cache build tools
+      uses: actions/cache@v4
+      with:
+        path: /workdir/immortalwrt/staging_dir/host*
+        key: ${{ runner.os }}-${{ env.REPO_BRANCH }}-tools-${{ hashFiles('**/feeds.conf.default') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ env.REPO_BRANCH }}-tools-
+
     - name: Cache build assets
       uses: actions/cache@v4
       with:
         path: |
-          /workdir/immortalwrt/staging_dir
+          /workdir/immortalwrt/staging_dir/toolchain-*
+          /workdir/immortalwrt/staging_dir/target-*
+          /workdir/immortalwrt/staging_dir/packages
+          /workdir/immortalwrt/staging_dir/root-*
           /workdir/immortalwrt/dl
         key: ${{ runner.os }}-${{ env.REPO_BRANCH }}-build-${{ hashFiles('**/feeds.conf.default', '**/.config') }}
         restore-keys: |
