@@ -167,4 +167,4 @@ jobs:
         cd immortalwrt
         make clean
         ./scripts/feeds clean
-        rm -rf dl/ build_dir/
+        rm -rf dl/
