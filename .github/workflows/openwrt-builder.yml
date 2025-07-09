@@ -49,22 +49,28 @@ jobs:
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
-    - name: Clone source code
-      working-directory: /workdir
-      run: |
-        df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH immortalwrt
-        ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
-
     - name: Cache build assets
       uses: actions/cache@v4
       with:
         path: |
-          /workdir/immortalwrt/staging_dir
-          /workdir/immortalwrt/dl
-        key: ${{ runner.os }}-${{ env.REPO_BRANCH }}-build-${{ hashFiles('**/feeds.conf.default', '**/.config') }}
+          /workdir/immortalwrt/
+        key: ${{ runner.os }}-${{ env.REPO_BRANCH }}-build-${{ hashFiles('**/.config') }}
         restore-keys: |
           ${{ runner.os }}-${{ env.REPO_BRANCH }}-build-
+
+    - name: Clone source code
+      working-directory: /workdir
+      run: |
+        df -hT $PWD
+        if [ -d "immortalwrt" ]; then
+          cd immortalwrt
+          git checkout .
+          git pull
+          cd ..
+        else
+          git clone $REPO_URL -b $REPO_BRANCH immortalwrt
+        fi
+        ln -sf /workdir/immortalwrt $GITHUB_WORKSPACE/immortalwrt
 
     - name: Load custom feeds
       run: |
@@ -73,11 +79,8 @@ jobs:
         cd immortalwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
 
-    - name: Update feeds
-      run: cd immortalwrt && ./scripts/feeds update -a
-
-    - name: Install feeds
-      run: cd immortalwrt && ./scripts/feeds install -a
+    - name: Update and install feeds
+      run: cd immortalwrt && ./scripts/feeds update -a && ./scripts/feeds install -a
 
     - name: Load custom configuration
       run: |
@@ -158,3 +161,10 @@ jobs:
         delete_tags: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Cleanup for cache 
+      run: |
+        cd immortalwrt
+        make clean
+        ./scripts/feeds clean
+        rm -rf dl/ build_dir/
